@@ -26,10 +26,10 @@ function App() {
     if (!question.trim() || loading) return;
     setLoading(true); setError(''); setAnswer(null);
     try {
-      const response = await fetch('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question, cache }) });
+      const response = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: question }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
-      setAnswer(data);
+      setAnswer({ ...data, sources: (data.contextUsed || []).map((source, index) => ({ ...source, id: index + 1, market: source.market || 'Retrieved context', timestamp: source.timestamp || '', speaker: source.speaker || 'Transcript', source: source.source || `context-${index + 1}` })) });
     } catch (requestError) { setError(requestError.message); }
     finally { setLoading(false); }
   }

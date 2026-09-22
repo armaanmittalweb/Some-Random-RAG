@@ -43,6 +43,21 @@ For Git-based deployment, push this repository to GitHub and add these repositor
 
 Every push to `main` then builds and deploys the Worker through `.github/workflows/deploy-cloudflare.yml`. The Worker serves the React assets and forwards `/api/*` requests to `API_ORIGIN`, so no frontend code changes are needed.
 
+### Worker secrets
+
+Set the runtime secrets on the Worker from the repository root. Wrangler will prompt securely for each value:
+
+```bash
+npx wrangler secret put GEMINI_API_KEY
+npx wrangler secret put MONGODB_URI
+npx wrangler secret put MONGODB_DATABASE
+npx wrangler secret put MONGODB_COLLECTION
+npx wrangler secret put MONGODB_VECTOR_INDEX
+npx wrangler secret put GEMINI_CHAT_MODEL
+```
+
+`GEMINI_API_KEY` and `MONGODB_URI` should be secrets. The database, collection, vector index, and chat model may also be configured as Wrangler variables, but using secrets keeps deployment configuration consistent. The MongoDB collection must have an Atlas Vector Search index whose vector path is `embedding`, dimension is `768`, and name matches `MONGODB_VECTOR_INDEX`.
+
 The API parses the supplied transcripts at startup and upserts one MongoDB document per timestamped speaker turn. Gemini creates the embeddings and produces low-temperature answers from retrieved excerpts only. The UI renders the numbered evidence trail that the model cites. When “Save answer for similar questions” is enabled, the answer and its citations are stored in the cache collection. A second Gemini model classifies whether a new question is substantially equivalent to a cached question before reusing it.
 
 Without `.env` credentials, the API still starts and reports its 42 parsed notes, but answering requires Gemini configuration and Atlas vector retrieval is unavailable. This makes the UI and parser easy to inspect without silently pretending that a local fallback is production retrieval.
